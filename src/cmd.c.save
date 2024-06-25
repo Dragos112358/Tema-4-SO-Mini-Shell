@@ -1,0 +1,333 @@
+// SPDX-License-Identifier: BSD-3-Clause
+
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <sys/wait.h>
+#include <unistd.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <errno.h>
+
+#include <fcntl.h>
+#include "cmd.h"
+#include "utils.h"
+
+#define READ		0
+#define WRITE		1
+
+extern char **environ;
+/**
+ * Internal change-directory command.
+ */
+static int shell_cd(word_t *dir)
+{
+	/* TODO: Execute cd. */
+	if (chdir(dir->string) != 0) {
+		perror("cd");
+		return 1; // Error
+	}
+	return 0; // Success
+}
+/**
+ * Internal exit/quit command.
+ */
+static int shell_exit(void)
+{
+	/* TODO: Execute exit/quit. */
+
+	exit(EXIT_FAILURE);
+
+	return -100; /* TODO: Replace with actual exit code. */
+}
+
+/**
+ * Parse a simple command (internal, environment variable assignment,
+ * external command).
+ */
+static int parse_simple(simple_command_t *s, int level, command_t *father)
+{
+	/* TODO: Sanity checks. */
+	if (s == NULL || s->verb == NULL) {
+		fprintf(stderr, "Invalid command\n");
+		return 1; // Error
+	}
+	if (strcmp(s->verb->string, "exit") == 0 || strcmp(s->verb->string, "quit") == 0)
+		return shell_exit();
+	if (strcmp(s->verb->string, "cd") == 0) {
+		// Execute cd command
+		if (s->out != NULL) {
+			int fd = open(s->out->string, O_WRONLY | O_CREAT | O_TRUNC, 0666);
+
+			if (fd == -1) {
+				perror("open");
+				return 1; // Error
+			}
+		}
+		if (s->params && s->params->string)
+			return shell_cd(s->params);
+		// If no directory is specified, go to the home directory
+		char *director_ho = getenv("HOME");
+
+		if (home_dir != NULL) {
+			word_t *dir = malloc(sizeof(word_t));
+
+			dir->string = home_dir;
+			dir->next_word = NULL;
+			return shell_cd(dir);
+		}
+		fprintf(stderr, "cd: No home directory\n");
+		return 1; // Error
+	}
+	// Automatically execute basic commands using execvp
+	pid_t pid = fork();
+
+	if (pid == -1) {
+		perror("fork");
+		return 1; // Error
+	}
+
+	if (pid == 0) {
+		// TODO: Perform redirections in child (if needed)
+		if (s->in != NULL) {
+			int fd = open(s->in->string, O_RDONLY);
+
+			if (fd == -1) {
+				perror("open");
+				exit(EXIT_FAILURE);
+			}
+			dup2(fd, STDIN_FILENO);
+			close(fd);
+		}
+		if (s->out != NULL) {
+			int fd;
+
+			if (s->io_flags & IO_OUT_APPEND)
+				fd = open(s->out->string, O_WRONLY | O_CREAT | O_APPEND, 0666);
+			else
+				fd = open(s->out->string, O_WRONLY | O_CREAT | O_TRUNC, 0666);
+			if (fd == -1) {
+				perror("open");
+				exit(EXIT_FAILURE);
+			}
+			// Close STDOUT_FILENO before redirecting
+			if (close(STDOUT_FILENO) == -1) {
+				perror("close");
+				exit(EXIT_FAILURE);
+			}
+			if (dup2(fd, STDOUT_FILENO) == -1) {
+				perror("dup2");
+				exit(EXIT_FAILURE);
+			}
+			close(fd);
+		}
+		if (s->err != NULL) {
+			int fd;
+
+			if (s->io_flags && IO_OUT_APPEND) {
+				fd = open(s->err->string, O_WRONLY | O_CREAT | O_APPEND, 0666);
+				dup2(fd, STDERR_FILENO);
+			} else {
+				fd = open(s->err->string, O_WRONLY | O_CREAT | O_TRUNC, 0666);
+				dup2(fd, STDERR_FILENO);
+			}
+			if (!(s->io_flags && IO_OUT_APPEND)) {
+				if (dup2(fd, STDOUT_FILENO) == -1)
+					close(fd);
+			}
+			// Close the file descriptor after redirection
+			close(fd);
+		}
+		// Check if it's a gcc -o executable file.c case
+		if (strcmp(s->verb->string, "gcc") == 0 && s->params) {
+			char *input_file = NULL;
+			char *output_file = "a.out"; // default output file
+
+			// Traverse the parameters to find the input and output files
+			for (word_t *param = s->params; param; param = param->next_word) {
+				if (strcmp(param->string, "-o") == 0 && param->next_word) {
+					// Set the next parameter as output file if -o is present
+					output_file = (char *) param->next_word->string;
+				} else {
+					// Set the first non-option parameter as input file
+					input_file = (char *) param->string;
+				}
+			}
+			if (input_file != NULL) {
+				execlp("gcc", "gcc", "-o", output_file, input_file, NULL);
+			} else {
+				fprintf(stderr, "Invalid gcc command\n");
+				exit(EXIT_FAILURE);
+			}
+		} else {
+			// Load executable in child
+			// Build an array of pointers for execvp
+			char *args[s->params ? (s->params->next_word ? 3 : 2) : 2]; // Max two parameters
+
+			args[0] = (char *) s->verb->string;
+			if (s->params) {
+				args[1] = (char *) s->params->string;
+				if (s->params->next_word) {
+					args[2] = (char *) s->params->next_word->string;
+					args[3] = NULL; // Null-terminate the array
+				} else {
+					args[2] = NULL; // Null-terminate the array
+				}
+			} else {
+				args[1] = NULL; // Null-terminate the array
+			}
+			execvp(s->verb->string, args);
+		}
+		fprintf(stderr, "Execution failed for '%s'\n", s->verb->string);
+		exit(EXIT_FAILURE);
+	} else {
+		int status;
+
+		waitpid(pid, &status, 0); // Wait for child to complete
+		return WEXITSTATUS(status);
+	}
+}
+/**
+ * Process two commands in parallel, by creating two children.
+ */
+static bool run_in_parallel(command_t *cmd1, command_t *cmd2, int level, command_t *father)
+{
+	/* TODO: Execute cmd1 and cmd2 simultaneously. */
+	int status1, status2;
+	pid_t pid1 = fork();
+
+	if (pid1 == -1) {
+		perror("fork");
+		exit(EXIT_FAILURE);
+	}
+
+	if (pid1 == 0) {
+		_exit(parse_command(cmd1, level + 1, father));
+	} else {
+		pid_t pid2 = fork();
+
+		if (pid2 == -1) {
+			perror("fork");
+			exit(EXIT_FAILURE);
+		}
+		if (pid2 == 0) {
+			_exit(parse_command(cmd2, level + 1, father));
+		} else {
+			waitpid(pid1, &status1, 0);
+			waitpid(pid2, &status2, 0);
+			return status1 == 0 && status2 == 0;
+		}
+	}
+	return true; /* TODO: Replace with actual exit status. */
+}
+
+/**
+ * Run commands by creating an anonymous pipe (cmd1 | cmd2).
+ */
+static bool run_on_pipe(command_t *cmd1, command_t *cmd2, int level, command_t *father)
+{
+	/* TODO: Redirect the output of cmd1 to the input of cmd2. */
+	int pipe_fd[2];
+
+	if (pipe(pipe_fd) == -1) {
+		perror("pipe");
+		exit(EXIT_FAILURE);
+	}
+
+	pid_t pid1 = fork();
+
+	if (pid1 == -1) {
+		perror("fork");
+		exit(EXIT_FAILURE);
+	}
+
+	if (pid1 == 0) {
+		close(pipe_fd[READ]);
+		dup2(pipe_fd[WRITE], STDOUT_FILENO);
+		close(pipe_fd[WRITE]);
+		exit(parse_command(cmd1, level + 1, father));
+	} else {
+		pid_t pid2 = fork();
+
+		if (pid2 == -1) {
+			perror("fork");
+			exit(EXIT_FAILURE);
+		}
+		if (pid2 == 0) {
+			close(pipe_fd[WRITE]);
+			dup2(pipe_fd[READ], STDIN_FILENO);
+			close(pipe_fd[READ]);
+			exit(parse_command(cmd2, level + 1, father));
+		} else {
+			close(pipe_fd[READ]);
+			close(pipe_fd[WRITE]);
+
+			int status1, status2;
+
+			waitpid(pid1, &status1, 0);
+			waitpid(pid2, &status2, 0);
+			return status1 == 0 && status2 == 0;
+		}
+	}
+
+	return true; // Replace with actual exit status.
+}
+
+/**
+ * Parse and execute a command.
+ */
+int parse_command(command_t *c, int level, command_t *father)
+{
+	/* TODO: sanity checks */
+	if (c == NULL) {
+		fprintf(stderr, "Invalid command\n");
+		return SHELL_EXIT;
+	}
+
+	if (c->op == OP_NONE) {
+		/* TODO: Execute a simple command. */
+		return parse_simple(c->scmd, level, father); /* TODO: Replace with actual exit code of command. */
+	}
+
+	int status = 0;
+
+	switch (c->op) {
+	case OP_SEQUENTIAL:
+		/* TODO: Execute the commands one after the other. */
+		status = parse_command(c->cmd1, level + 1, c);
+		status = parse_command(c->cmd2, level + 1, c);
+		break;
+
+	case OP_PARALLEL:
+		/* TODO: Execute the commands simultaneously. */
+		status = run_in_parallel(c->cmd1, c->cmd2, level + 1, c);
+		break;
+
+	case OP_CONDITIONAL_NZERO:
+		/* TODO: Execute the second command only if the first one returns non-zero*/
+		status = parse_command(c->cmd1, level + 1, c);
+		if (status != 0)
+			status = parse_command(c->cmd2, level + 1, c);
+		break;
+
+	case OP_CONDITIONAL_ZERO:
+		/* TODO: Execute the second command only if the first one returns zero.*/
+		status = parse_command(c->cmd1, level + 1, c);
+		if (status == 0)
+			status = parse_command(c->cmd2, level + 1, c);
+		break;
+
+	case OP_PIPE:
+		/* TODO: Redirect the output of the first command to the input of the second.*/
+		status = run_on_pipe(c->cmd1, c->cmd2, level + 1, c);
+		break;
+
+	default:
+		return SHELL_EXIT;
+	}
+
+	return status; /* TODO: Replace with actual exit code of command. */
+}
+
+
+

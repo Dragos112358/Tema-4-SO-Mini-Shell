@@ -1,0 +1,139 @@
+==11352== Memcheck, a memory error detector
+==11352== Copyright (C) 2002-2017, and GNU GPL'd, by Julian Seward et al.
+==11352== Using Valgrind-3.15.0 and LibVEX; rerun with -h for copyright info
+==11352== Command: mini-shell
+==11352== Parent PID: 11351
+==11352== 
+==11352== 
+==11352== FILE DESCRIPTORS: 6 open at exit.
+==11352== Open file descriptor 5: out.txt
+==11352==    at 0x496BF5B: open (open64.c:48)
+==11352==    by 0x109A88: parse_simple (cmd.c:86)
+==11352==    by 0x10A407: parse_command (cmd.c:388)
+==11352==    by 0x109818: start_shell (main.c:81)
+==11352==    by 0x10985E: main (main.c:93)
+==11352== 
+==11352== Open file descriptor 4: out-err.txt
+==11352==    at 0x496BF5B: open (open64.c:48)
+==11352==    by 0x109A88: parse_simple (cmd.c:86)
+==11352==    by 0x10A407: parse_command (cmd.c:388)
+==11352==    by 0x109818: start_shell (main.c:81)
+==11352==    by 0x10985E: main (main.c:93)
+==11352== 
+==11352== Open file descriptor 3: /home/student/Desktop/assignment-mini-shell/tests/_test/outputs/test_05_out/valgrind.log
+==11352==    <inherited from parent>
+==11352== 
+==11352== Open file descriptor 2: /dev/null
+==11352==    <inherited from parent>
+==11352== 
+==11352== Open file descriptor 1: /dev/null
+==11352==    <inherited from parent>
+==11352== 
+==11352== Open file descriptor 0: /home/student/Desktop/assignment-mini-shell/tests/_test/outputs/test_05.in
+==11352==    <inherited from parent>
+==11352== 
+==11352== 
+==11352== HEAP SUMMARY:
+==11352==     in use at exit: 1,339 bytes in 10 blocks
+==11352==   total heap usage: 140 allocs, 130 frees, 18,624 bytes allocated
+==11352== 
+==11352== 5 bytes in 1 blocks are still reachable in loss record 1 of 10
+==11352==    at 0x483B7F3: malloc (in /usr/lib/x86_64-linux-gnu/valgrind/vgpreload_memcheck-amd64-linux.so)
+==11352==    by 0x48FD38E: strdup (strdup.c:42)
+==11352==    by 0x10D67E: yylex (in /home/student/Desktop/assignment-mini-shell/tests/mini-shell)
+==11352==    by 0x10B4E5: yyparse (in /home/student/Desktop/assignment-mini-shell/tests/mini-shell)
+==11352==    by 0x10CEE0: parse_line (in /home/student/Desktop/assignment-mini-shell/tests/mini-shell)
+==11352==    by 0x1097F9: start_shell (main.c:78)
+==11352==    by 0x10985E: main (main.c:93)
+==11352== 
+==11352== 6 bytes in 1 blocks are still reachable in loss record 2 of 10
+==11352==    at 0x483B7F3: malloc (in /usr/lib/x86_64-linux-gnu/valgrind/vgpreload_memcheck-amd64-linux.so)
+==11352==    by 0x10EF6F: yyalloc (in /home/student/Desktop/assignment-mini-shell/tests/mini-shell)
+==11352==    by 0x10EC98: yy_scan_bytes (in /home/student/Desktop/assignment-mini-shell/tests/mini-shell)
+==11352==    by 0x10EC6B: yy_scan_string (in /home/student/Desktop/assignment-mini-shell/tests/mini-shell)
+==11352==    by 0x10EFDA: globalParseAnotherString (in /home/student/Desktop/assignment-mini-shell/tests/mini-shell)
+==11352==    by 0x10CE9A: parse_line (in /home/student/Desktop/assignment-mini-shell/tests/mini-shell)
+==11352==    by 0x1097F9: start_shell (main.c:78)
+==11352==    by 0x10985E: main (main.c:93)
+==11352== 
+==11352== 8 bytes in 1 blocks are still reachable in loss record 3 of 10
+==11352==    at 0x483B7F3: malloc (in /usr/lib/x86_64-linux-gnu/valgrind/vgpreload_memcheck-amd64-linux.so)
+==11352==    by 0x10EF6F: yyalloc (in /home/student/Desktop/assignment-mini-shell/tests/mini-shell)
+==11352==    by 0x10EA38: yyensure_buffer_stack (in /home/student/Desktop/assignment-mini-shell/tests/mini-shell)
+==11352==    by 0x10E445: yy_switch_to_buffer (in /home/student/Desktop/assignment-mini-shell/tests/mini-shell)
+==11352==    by 0x10EC39: yy_scan_buffer (in /home/student/Desktop/assignment-mini-shell/tests/mini-shell)
+==11352==    by 0x10ED1B: yy_scan_bytes (in /home/student/Desktop/assignment-mini-shell/tests/mini-shell)
+==11352==    by 0x10EC6B: yy_scan_string (in /home/student/Desktop/assignment-mini-shell/tests/mini-shell)
+==11352==    by 0x10EFDA: globalParseAnotherString (in /home/student/Desktop/assignment-mini-shell/tests/mini-shell)
+==11352==    by 0x10CE9A: parse_line (in /home/student/Desktop/assignment-mini-shell/tests/mini-shell)
+==11352==    by 0x1097F9: start_shell (main.c:78)
+==11352==    by 0x10985E: main (main.c:93)
+==11352== 
+==11352== 32 bytes in 1 blocks are still reachable in loss record 4 of 10
+==11352==    at 0x483B7F3: malloc (in /usr/lib/x86_64-linux-gnu/valgrind/vgpreload_memcheck-amd64-linux.so)
+==11352==    by 0x10AE40: new_word (in /home/student/Desktop/assignment-mini-shell/tests/mini-shell)
+==11352==    by 0x10C85D: yyparse (in /home/student/Desktop/assignment-mini-shell/tests/mini-shell)
+==11352==    by 0x10CEE0: parse_line (in /home/student/Desktop/assignment-mini-shell/tests/mini-shell)
+==11352==    by 0x1097F9: start_shell (main.c:78)
+==11352==    by 0x10985E: main (main.c:93)
+==11352== 
+==11352== 32 bytes in 1 blocks are definitely lost in loss record 5 of 10
+==11352==    at 0x483B7F3: malloc (in /usr/lib/x86_64-linux-gnu/valgrind/vgpreload_memcheck-amd64-linux.so)
+==11352==    by 0x109B03: parse_simple (cmd.c:103)
+==11352==    by 0x10A407: parse_command (cmd.c:388)
+==11352==    by 0x109818: start_shell (main.c:81)
+==11352==    by 0x10985E: main (main.c:93)
+==11352== 
+==11352== 48 bytes in 1 blocks are still reachable in loss record 6 of 10
+==11352==    at 0x483B7F3: malloc (in /usr/lib/x86_64-linux-gnu/valgrind/vgpreload_memcheck-amd64-linux.so)
+==11352==    by 0x10ABA8: new_command (in /home/student/Desktop/assignment-mini-shell/tests/mini-shell)
+==11352==    by 0x10B89B: yyparse (in /home/student/Desktop/assignment-mini-shell/tests/mini-shell)
+==11352==    by 0x10CEE0: parse_line (in /home/student/Desktop/assignment-mini-shell/tests/mini-shell)
+==11352==    by 0x1097F9: start_shell (main.c:78)
+==11352==    by 0x10985E: main (main.c:93)
+==11352== 
+==11352== 56 bytes in 1 blocks are still reachable in loss record 7 of 10
+==11352==    at 0x483DFAF: realloc (in /usr/lib/x86_64-linux-gnu/valgrind/vgpreload_memcheck-amd64-linux.so)
+==11352==    by 0x10A9CE: ensureSize (in /home/student/Desktop/assignment-mini-shell/tests/mini-shell)
+==11352==    by 0x10AA6A: pointerToMallocMemory (in /home/student/Desktop/assignment-mini-shell/tests/mini-shell)
+==11352==    by 0x10ABE9: new_command (in /home/student/Desktop/assignment-mini-shell/tests/mini-shell)
+==11352==    by 0x10B89B: yyparse (in /home/student/Desktop/assignment-mini-shell/tests/mini-shell)
+==11352==    by 0x10CEE0: parse_line (in /home/student/Desktop/assignment-mini-shell/tests/mini-shell)
+==11352==    by 0x1097F9: start_shell (main.c:78)
+==11352==    by 0x10985E: main (main.c:93)
+==11352== 
+==11352== 64 bytes in 1 blocks are still reachable in loss record 8 of 10
+==11352==    at 0x483B7F3: malloc (in /usr/lib/x86_64-linux-gnu/valgrind/vgpreload_memcheck-amd64-linux.so)
+==11352==    by 0x10EF6F: yyalloc (in /home/student/Desktop/assignment-mini-shell/tests/mini-shell)
+==11352==    by 0x10EB9A: yy_scan_buffer (in /home/student/Desktop/assignment-mini-shell/tests/mini-shell)
+==11352==    by 0x10ED1B: yy_scan_bytes (in /home/student/Desktop/assignment-mini-shell/tests/mini-shell)
+==11352==    by 0x10EC6B: yy_scan_string (in /home/student/Desktop/assignment-mini-shell/tests/mini-shell)
+==11352==    by 0x10EFDA: globalParseAnotherString (in /home/student/Desktop/assignment-mini-shell/tests/mini-shell)
+==11352==    by 0x10CE9A: parse_line (in /home/student/Desktop/assignment-mini-shell/tests/mini-shell)
+==11352==    by 0x1097F9: start_shell (main.c:78)
+==11352==    by 0x10985E: main (main.c:93)
+==11352== 
+==11352== 64 bytes in 1 blocks are still reachable in loss record 9 of 10
+==11352==    at 0x483B7F3: malloc (in /usr/lib/x86_64-linux-gnu/valgrind/vgpreload_memcheck-amd64-linux.so)
+==11352==    by 0x10AAB3: bind_parts (in /home/student/Desktop/assignment-mini-shell/tests/mini-shell)
+==11352==    by 0x10BA6A: yyparse (in /home/student/Desktop/assignment-mini-shell/tests/mini-shell)
+==11352==    by 0x10CEE0: parse_line (in /home/student/Desktop/assignment-mini-shell/tests/mini-shell)
+==11352==    by 0x1097F9: start_shell (main.c:78)
+==11352==    by 0x10985E: main (main.c:93)
+==11352== 
+==11352== 1,024 bytes in 1 blocks are still reachable in loss record 10 of 10
+==11352==    at 0x483B723: malloc (in /usr/lib/x86_64-linux-gnu/valgrind/vgpreload_memcheck-amd64-linux.so)
+==11352==    by 0x483E017: realloc (in /usr/lib/x86_64-linux-gnu/valgrind/vgpreload_memcheck-amd64-linux.so)
+==11352==    by 0x1096D0: read_line (main.c:50)
+==11352==    by 0x1097DB: start_shell (main.c:75)
+==11352==    by 0x10985E: main (main.c:93)
+==11352== 
+==11352== LEAK SUMMARY:
+==11352==    definitely lost: 32 bytes in 1 blocks
+==11352==    indirectly lost: 0 bytes in 0 blocks
+==11352==      possibly lost: 0 bytes in 0 blocks
+==11352==    still reachable: 1,307 bytes in 9 blocks
+==11352==         suppressed: 0 bytes in 0 blocks
+==11352== 
+==11352== For lists of detected and suppressed errors, rerun with: -s
+==11352== ERROR SUMMARY: 1 errors from 1 contexts (suppressed: 0 from 0)
